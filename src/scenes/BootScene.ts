@@ -13,10 +13,10 @@ export class BootScene extends Phaser.Scene {
   private generateTextures() {
     const g = this.make.graphics({ x: 0, y: 0 });
 
-    // Ball
+    // Ball — radius 21 avoids edge-aliasing artifacts
     g.clear();
     g.fillStyle(0xffffff);
-    g.fillCircle(24, 24, 24);
+    g.fillCircle(24, 24, 21);
     g.generateTexture('ball', 48, 48);
 
     // Normal platform tile
@@ -155,14 +155,15 @@ export class BootScene extends Phaser.Scene {
     g.strokeCircle(28, 20, 7);
     g.generateTexture('portal-locked', 56, 56);
 
-    // Coin
+    // Heart (replaces coin)
     g.clear();
-    g.fillStyle(0xffdd00);
-    g.fillCircle(8, 8, 8);
-    g.lineStyle(2, 0xffaa00);
-    g.strokeCircle(8, 8, 8);
-    g.fillStyle(0xffee88);
-    g.fillCircle(6, 6, 3);
+    g.fillStyle(0xff3377);
+    g.fillCircle(5, 6, 4.5);
+    g.fillCircle(11, 6, 4.5);
+    g.fillRect(2, 6, 12, 4);
+    g.fillTriangle(1, 9, 15, 9, 8, 16);
+    g.fillStyle(0xff88bb, 0.7);
+    g.fillCircle(4, 4, 2);
     g.generateTexture('coin', 16, 16);
 
     // Checkpoint (inactive) — gray flag
@@ -222,6 +223,32 @@ export class BootScene extends Phaser.Scene {
     g.fillStyle(0xffffff);
     g.fillCircle(4, 4, 4);
     g.generateTexture('particle', 8, 8);
+
+    // Dubu mode — pink ball
+    g.clear();
+    g.fillStyle(0xff69b4);
+    g.fillCircle(24, 24, 24);
+    g.fillStyle(0xffc0cb, 0.5);
+    g.fillCircle(18, 18, 10);
+    g.fillStyle(0xffffff, 0.5);
+    g.fillCircle(16, 14, 5);
+    g.generateTexture('ball-dubu', 48, 48);
+
+    // Dubu mode — lavender platform tile
+    g.clear();
+    g.fillStyle(0xc084fc);
+    g.fillRect(0, 0, 32, 16);
+    g.fillStyle(0xe9d5ff);
+    g.fillRect(0, 0, 32, 4);
+    g.lineStyle(1, 0xf3e8ff);
+    g.strokeRect(0, 0, 32, 16);
+    g.generateTexture('platform-dubu', 32, 16);
+
+    // Falling petal for dubu bg decoration
+    g.clear();
+    g.fillStyle(0xffc0cb, 0.85);
+    g.fillEllipse(5, 8, 10, 14);
+    g.generateTexture('petal', 10, 16);
 
     g.destroy();
   }

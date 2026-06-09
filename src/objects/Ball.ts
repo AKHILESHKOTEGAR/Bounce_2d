@@ -16,6 +16,7 @@ export class Ball extends Phaser.Physics.Arcade.Sprite {
   // Power-up state (read by GameScene)
   hasShield = false;
   speedBoost = false;
+  dubuMode = false;
 
   constructor(scene: Phaser.Scene, x: number, y: number) {
     super(scene, x, y, 'ball');
@@ -105,7 +106,7 @@ export class Ball extends Phaser.Physics.Arcade.Sprite {
     if (this.speedTween) this.speedTween.stop();
     this.scene.time.delayedCall(duration, () => {
       this.speedBoost = false;
-      this.setTint(this.hasShield ? 0x4488ff : 0x44aaff);
+      this.setTint(this.hasShield ? 0x4488ff : (this.dubuMode ? 0xff69b4 : 0x44aaff));
     });
   }
 
@@ -113,12 +114,12 @@ export class Ball extends Phaser.Physics.Arcade.Sprite {
     this.hasShield = false;
     this.shieldGfx?.destroy();
     this.shieldGfx = undefined;
-    this.setTint(0x44aaff);
-    // Flash white to show absorption
+    const baseColor = this.dubuMode ? 0xff69b4 : 0x44aaff;
+    this.setTint(baseColor);
     this.scene.tweens.add({
       targets: this, tint: 0xffffff,
       duration: 100, yoyo: true,
-      onComplete: () => this.setTint(0x44aaff),
+      onComplete: () => this.setTint(baseColor),
     });
   }
 
@@ -127,7 +128,7 @@ export class Ball extends Phaser.Physics.Arcade.Sprite {
       const angle = Phaser.Math.FloatBetween(Math.PI * 0.75, Math.PI * 1.25);
       const speed = Phaser.Math.FloatBetween(60, 160);
       const p = this.scene.add.graphics().setDepth(9);
-      p.fillStyle(0x44aaff, 0.9);
+      p.fillStyle(this.dubuMode ? 0xff69b4 : 0x44aaff, 0.9);
       p.fillCircle(0, 0, Phaser.Math.Between(2, 5));
       p.x = this.x;
       p.y = this.y + 20;
@@ -151,7 +152,7 @@ export class Ball extends Phaser.Physics.Arcade.Sprite {
     this.trailTimer += delta;
     if (this.trailTimer > 40) {
       this.trailTimer = 0;
-      const color = this.speedBoost ? 0xdd9900 : 0x2266cc;
+      const color = this.speedBoost ? 0xdd9900 : (this.dubuMode ? 0xdd88aa : 0x2266cc);
       const t = this.scene.add.graphics().setDepth(8);
       t.fillStyle(color, 0.35);
       t.fillCircle(this.x, this.y, 18);

@@ -3,8 +3,9 @@ import Phaser from 'phaser';
 export class GameOverScene extends Phaser.Scene {
   constructor() { super('GameOver'); }
 
-  create(data: { score: number }) {
+  create(data: { score: number; dubuMode?: boolean }) {
     const { width, height } = this.scale;
+    const dubu = data.dubuMode ?? false;
 
     this.add.rectangle(width / 2, height / 2, width, height, 0x000000, 0.85);
 
@@ -18,14 +19,19 @@ export class GameOverScene extends Phaser.Scene {
       fontSize: '32px', fontFamily: 'Arial', color: '#ffffff',
     }).setOrigin(0.5);
 
-    this.add.text(width / 2, height * 0.62, 'Better luck next time!', {
-      fontSize: '20px', fontFamily: 'Arial', color: '#8899bb',
+    const subtitle = dubu
+      ? "Don't give up, Dubu! Try again! ♥"
+      : 'Better luck next time!';
+    this.add.text(width / 2, height * 0.62, subtitle, {
+      fontSize: '20px', fontFamily: 'Arial', color: dubu ? '#ff69b4' : '#8899bb',
     }).setOrigin(0.5);
 
+    const btnColor = dubu ? '#ff69b4' : '#00ffaa';
+    const btnStroke = dubu ? '#660033' : '#007744';
     const btn = this.add.text(width / 2, height * 0.78, '↩  TRY AGAIN', {
-      fontSize: '30px', fontFamily: 'Arial Black', color: '#00ffaa',
+      fontSize: '30px', fontFamily: 'Arial Black', color: btnColor,
       padding: { x: 24, y: 10 }, backgroundColor: '#001122',
-      stroke: '#007744', strokeThickness: 3,
+      stroke: btnStroke, strokeThickness: 3,
     }).setOrigin(0.5).setInteractive({ useHandCursor: true });
 
     btn.on('pointerover', () => btn.setScale(1.06));
@@ -33,7 +39,7 @@ export class GameOverScene extends Phaser.Scene {
     btn.on('pointerdown', () => {
       this.cameras.main.fadeOut(400, 0, 0, 0);
       this.cameras.main.once('camerafadeoutcomplete', () => {
-        this.scene.start('Game', { level: 1, lives: 3, score: 0 });
+        this.scene.start('Game', { level: 1, lives: 3, score: 0, dubuMode: dubu });
       });
     });
 

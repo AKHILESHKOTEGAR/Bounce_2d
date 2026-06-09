@@ -129,6 +129,7 @@ export class GameScene extends Phaser.Scene {
   private levelIndex = 1;
   private lives = 3;
   private score = 0;
+  private dubuMode = false;
   private coinsCollected = 0;
   private totalCoins = 0;
   private timeLeft = 60;
@@ -140,10 +141,11 @@ export class GameScene extends Phaser.Scene {
 
   constructor() { super('Game'); }
 
-  init(data: { level?: number; lives?: number; score?: number }) {
+  init(data: { level?: number; lives?: number; score?: number; dubuMode?: boolean }) {
     this.levelIndex    = data.level ?? 1;
     this.lives         = data.lives ?? 3;
     this.score         = data.score ?? 0;
+    this.dubuMode      = data.dubuMode ?? false;
     this.dead          = false;
     this.transitioning = false;
     this.jumpDown      = false;
@@ -310,6 +312,95 @@ export class GameScene extends Phaser.Scene {
       duration: 500, hold: 1000, yoyo: true,
       ease: 'Quad.easeInOut',
     });
+
+    if (this.dubuMode) this.applyDubuTheme();
+  }
+
+  // ── Dubu Mode ────────────────────────────────────────────────
+
+  private applyDubuTheme() {
+    this.cameras.main.setBackgroundColor(0x1a0822);
+    this.drawDubuStars();
+
+    this.ball.clearTint();
+    this.ball.setTint(0xff69b4);
+    this.ball.dubuMode = true;
+
+    this.platforms.getChildren().forEach(t =>
+      (t as Phaser.Physics.Arcade.Image).setTint(0xd8b4fe));
+    this.movingPlatforms.getChildren().forEach(t =>
+      (t as Phaser.Physics.Arcade.Image).setTint(0xf0abfc));
+    this.icePlatforms.getChildren().forEach(t =>
+      (t as Phaser.Physics.Arcade.Image).setTint(0xfda4af));
+    this.bouncePlatforms.getChildren().forEach(t =>
+      (t as Phaser.Physics.Arcade.Image).setTint(0xfb7185));
+    this.crumblePlatforms.getChildren().forEach(t =>
+      (t as Phaser.Physics.Arcade.Image).setTint(0xf472b6));
+    this.conveyorPlatforms.getChildren().forEach(t =>
+      (t as Phaser.Physics.Arcade.Image).setTint(0xc084fc));
+    this.disappearPlatforms.getChildren().forEach(t =>
+      (t as Phaser.Physics.Arcade.Image).setTint(0xa855f7));
+
+    this.portalSprite.setTint(0xff69b4);
+
+    this.livesText.setColor('#ff69b4');
+    this.scoreText.setColor('#ffc0cb');
+    this.coinText.setColor('#ffb6c1');
+    this.timerText.setColor('#ff69b4');
+    this.levelTitle.setStroke('#880044', 6);
+
+    const welcome = this.add.text(480, 240, '✨  Welcome, Dubu!  ✨', {
+      fontSize: '34px', fontFamily: 'Arial Black', color: '#ff69b4',
+      stroke: '#660033', strokeThickness: 5,
+      shadow: { color: '#ff69b4', blur: 20, fill: true },
+    }).setOrigin(0.5).setDepth(201).setAlpha(0);
+
+    this.tweens.add({
+      targets: welcome,
+      alpha: { from: 0, to: 1 },
+      duration: 500, hold: 1500, yoyo: true,
+      ease: 'Quad.easeInOut',
+      onComplete: () => welcome.destroy(),
+    });
+
+    this.startPetalRain();
+  }
+
+  private drawDubuStars() {
+    this.stars.clear();
+    for (let i = 0; i < 80; i++) {
+      const x = Phaser.Math.Between(0, 960);
+      const y = Phaser.Math.Between(0, 600);
+      const r = Phaser.Math.FloatBetween(0.5, 2.5);
+      this.stars.fillStyle(i % 3 === 0 ? 0xff69b4 : 0xffc0cb, Phaser.Math.FloatBetween(0.3, 0.9));
+      this.stars.fillCircle(x, y, r);
+    }
+  }
+
+  private startPetalRain() {
+    this.time.addEvent({
+      delay: 600,
+      repeat: -1,
+      callback: () => {
+        if (!this.scene.isActive('Game')) return;
+        const x = Phaser.Math.Between(0, 960);
+        const petal = this.add.image(x, -10, 'petal')
+          .setDepth(1)
+          .setAlpha(0.55)
+          .setTint(Phaser.Math.Between(0, 1) === 1 ? 0xffc0cb : 0xe9d5ff)
+          .setAngle(Phaser.Math.Between(0, 360));
+        this.tweens.add({
+          targets: petal,
+          y: 640,
+          x: petal.x + Phaser.Math.Between(-60, 60),
+          angle: petal.angle + Phaser.Math.Between(-180, 180),
+          alpha: 0,
+          duration: Phaser.Math.Between(3000, 5000),
+          ease: 'Linear',
+          onComplete: () => petal.destroy(),
+        });
+      },
+    });
   }
 
   // ── Build helpers ────────────────────────────────────────────
@@ -471,7 +562,7 @@ export class GameScene extends Phaser.Scene {
     });
 
     const need = this.level.requiredCoins;
-    this.portalHintText = this.add.text(x, y + 38, `🔒 Need ${need} coins`, {
+    this.portalHintText = this.add.text(x, y + 38, `🔒 Need ${need} ♥`, {
       fontSize: '13px', fontFamily: 'Arial', color: '#ff8888',
       stroke: '#000', strokeThickness: 2,
     }).setOrigin(0.5, 0).setDepth(20);
@@ -654,8 +745,8 @@ export class GameScene extends Phaser.Scene {
     this.scoreText = this.add.text(80, 32, `${this.score}`, s).setDepth(100);
 
     this.coinText = this.add.text(480, 8,
-      `COINS: 0/${this.totalCoins}  (need ${this.level.requiredCoins})`,
-      { ...s, color: '#ffdd44' }).setOrigin(0.5, 0).setDepth(100);
+      `♥ 0/${this.totalCoins}  (need ${this.level.requiredCoins})`,
+      { ...s, color: '#ff88bb' }).setOrigin(0.5, 0).setDepth(100);
 
     this.timerText = this.add.text(870, 8, `⏱ ${this.timeLeft}s`,
       { ...s, color: '#00ffaa' }).setDepth(100);
@@ -710,7 +801,7 @@ export class GameScene extends Phaser.Scene {
     const points = 100 * mult;
     this.score  += points;
     this.scoreText.setText(`${this.score}`);
-    this.coinText.setText(`COINS: ${this.coinsCollected}/${this.totalCoins}  (need ${this.level.requiredCoins})`);
+    this.coinText.setText(`♥ ${this.coinsCollected}/${this.totalCoins}  (need ${this.level.requiredCoins})`);
 
     if (this.coinsCollected >= this.level.requiredCoins && this.portalLocked) {
       this.unlockPortal();
@@ -854,7 +945,7 @@ export class GameScene extends Phaser.Scene {
     if (this.warningActive) return;
     this.warningActive = true;
     const need = this.level.requiredCoins - this.coinsCollected;
-    this.warningText.setText(`🔒 Collect ${need} more coin${need !== 1 ? 's' : ''} first!`);
+    this.warningText.setText(`🔒 Collect ${need} more heart${need !== 1 ? 's' : ''} first!`);
     this.tweens.add({
       targets: this.warningText,
       alpha: { from: 0, to: 1 },
@@ -887,6 +978,7 @@ export class GameScene extends Phaser.Scene {
       this.scene.start('LevelComplete', {
         level: this.levelIndex, lives: this.lives, score: this.score,
         timeBonus, coinBonus, allCoins: this.coinsCollected === this.totalCoins,
+        dubuMode: this.dubuMode,
       });
     });
   }
@@ -943,7 +1035,7 @@ export class GameScene extends Phaser.Scene {
     this.time.delayedCall(1400, () => {
       if (this.lives <= 0) {
         this.timerEvent.remove();
-        this.scene.start('GameOver', { score: this.score });
+        this.scene.start('GameOver', { score: this.score, dubuMode: this.dubuMode });
       } else {
         this.respawn();
       }
@@ -964,7 +1056,7 @@ export class GameScene extends Phaser.Scene {
     body.reset(this.respawnX, this.respawnY);
     body.setVelocity(0, 0);
     body.setAllowGravity(true);
-    this.ball.setTint(0x44aaff);
+    this.ball.setTint(this.dubuMode ? 0xff69b4 : 0x44aaff);
     this.timeLeft = this.level.timeLimit;
     this.timerText.setText(`⏱ ${this.timeLeft}s`).setColor('#00ffaa');
     this.timeFrozen = false;

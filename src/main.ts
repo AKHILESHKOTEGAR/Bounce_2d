@@ -4,6 +4,7 @@ import { MenuScene } from './scenes/MenuScene';
 import { GameScene } from './scenes/GameScene';
 import { LevelCompleteScene } from './scenes/LevelCompleteScene';
 import { GameOverScene } from './scenes/GameOverScene';
+import { DubuIntroScene } from './scenes/DubuIntroScene';
 
 const config: Phaser.Types.Core.GameConfig = {
   type: Phaser.AUTO,
@@ -18,7 +19,7 @@ const config: Phaser.Types.Core.GameConfig = {
       debug: false,
     },
   },
-  scene: [BootScene, MenuScene, GameScene, LevelCompleteScene, GameOverScene],
+  scene: [BootScene, MenuScene, DubuIntroScene, GameScene, LevelCompleteScene, GameOverScene],
 };
 
 (window as unknown as Record<string, unknown>).__phaserGame = new Phaser.Game(config);
