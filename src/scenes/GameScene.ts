@@ -1035,7 +1035,7 @@ export class GameScene extends Phaser.Scene {
     this.time.delayedCall(1400, () => {
       if (this.lives <= 0) {
         this.timerEvent.remove();
-        this.scene.start('GameOver', { score: this.score, dubuMode: this.dubuMode });
+        this.scene.start('GameOver', { score: this.score, dubuMode: this.dubuMode, level: this.levelIndex });
       } else {
         this.respawn();
       }

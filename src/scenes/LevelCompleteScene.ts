@@ -33,7 +33,7 @@ export class LevelCompleteScene extends Phaser.Scene {
     this.add.rectangle(width / 2, height / 2, width, height, 0x000000, 0.7);
 
     const panelStroke = dubu ? 0xff69b4 : 0x00ccff;
-    const panel = this.add.rectangle(width / 2, height / 2, 520, 510, 0x0a1a2a, 0.97);
+    const panel = this.add.rectangle(width / 2, height / 2, 520, 560, 0x0a1a2a, 0.97);
     panel.setStrokeStyle(2, panelStroke);
 
     const headerColor = dubu ? '#ff69b4' : '#00ffaa';
@@ -44,19 +44,20 @@ export class LevelCompleteScene extends Phaser.Scene {
       shadow: { color: headerColor, blur: 20, fill: true },
     }).setOrigin(0.5);
 
-    // Love note per level
-    const noteIdx = Math.min(data.level - 1, LEVEL_NOTES.length - 1);
-    const noteColor = dubu ? '#ffb6c1' : '#cce8ff';
-    const note = this.add.text(width / 2, height / 2 - 165, LEVEL_NOTES[noteIdx], {
-      fontSize: '12px', fontFamily: 'Arial', color: noteColor,
-      stroke: '#000020', strokeThickness: 2,
-      align: 'center', lineSpacing: 4,
-      wordWrap: { width: 470 },
-    }).setOrigin(0.5, 0).setAlpha(0);
+    // Love note per level — only in dubu mode
+    if (dubu) {
+      const noteIdx = Math.min(data.level - 1, LEVEL_NOTES.length - 1);
+      const note = this.add.text(width / 2, height / 2 - 165, LEVEL_NOTES[noteIdx], {
+        fontSize: '12px', fontFamily: 'Arial', color: '#ffb6c1',
+        stroke: '#000020', strokeThickness: 2,
+        align: 'center', lineSpacing: 4,
+        wordWrap: { width: 470 },
+      }).setOrigin(0.5, 0).setAlpha(0);
 
-    this.tweens.add({
-      targets: note, alpha: 1, duration: 700, delay: 250, ease: 'Quad.easeIn',
-    });
+      this.tweens.add({
+        targets: note, alpha: 1, duration: 700, delay: 250, ease: 'Quad.easeIn',
+      });
+    }
 
     // Divider
     const divColor = dubu ? 0xff69b4 : 0x224466;
@@ -84,9 +85,9 @@ export class LevelCompleteScene extends Phaser.Scene {
     }).setOrigin(0.5);
 
     const btnText = hasNext ? `▶  LEVEL ${nextLevel}` : '▶  PLAY AGAIN';
-    const btn = this.add.text(width / 2, height / 2 + 200, btnText, {
-      fontSize: '28px', fontFamily: 'Arial Black', color: headerColor,
-      padding: { x: 24, y: 10 }, backgroundColor: '#001122',
+    const btn = this.add.text(width / 2, height / 2 + 185, btnText, {
+      fontSize: '26px', fontFamily: 'Arial Black', color: headerColor,
+      padding: { x: 22, y: 9 }, backgroundColor: '#001122',
       stroke: headerStroke, strokeThickness: 3,
     }).setOrigin(0.5).setInteractive({ useHandCursor: true });
 
@@ -101,6 +102,36 @@ export class LevelCompleteScene extends Phaser.Scene {
           score: hasNext ? data.score : 0,
           dubuMode: dubu,
         });
+      });
+    });
+
+    const retryBtn = this.add.text(width / 2, height / 2 + 228, `↩  RETRY LEVEL ${data.level}`, {
+      fontSize: '17px', fontFamily: 'Arial Black', color: '#aabbcc',
+      padding: { x: 14, y: 6 }, backgroundColor: '#000a18',
+      stroke: '#334466', strokeThickness: 2,
+    }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+
+    retryBtn.on('pointerover', () => retryBtn.setScale(1.06));
+    retryBtn.on('pointerout', () => retryBtn.setScale(1));
+    retryBtn.on('pointerdown', () => {
+      this.cameras.main.fadeOut(400, 0, 0, 0);
+      this.cameras.main.once('camerafadeoutcomplete', () => {
+        this.scene.start('Game', { level: data.level, lives: 3, score: 0, dubuMode: dubu });
+      });
+    });
+
+    const fromStartBtn = this.add.text(width / 2, height / 2 + 262, '⏮  START FROM LEVEL 1', {
+      fontSize: '15px', fontFamily: 'Arial Black', color: '#667788',
+      padding: { x: 14, y: 6 }, backgroundColor: '#000a18',
+      stroke: '#223344', strokeThickness: 2,
+    }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+
+    fromStartBtn.on('pointerover', () => fromStartBtn.setScale(1.06));
+    fromStartBtn.on('pointerout', () => fromStartBtn.setScale(1));
+    fromStartBtn.on('pointerdown', () => {
+      this.cameras.main.fadeOut(400, 0, 0, 0);
+      this.cameras.main.once('camerafadeoutcomplete', () => {
+        this.scene.start('Game', { level: 1, lives: 3, score: 0, dubuMode: dubu });
       });
     });
 

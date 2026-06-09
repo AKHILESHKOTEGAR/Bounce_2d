@@ -3,9 +3,10 @@ import Phaser from 'phaser';
 export class GameOverScene extends Phaser.Scene {
   constructor() { super('GameOver'); }
 
-  create(data: { score: number; dubuMode?: boolean }) {
+  create(data: { score: number; dubuMode?: boolean; level?: number }) {
     const { width, height } = this.scale;
     const dubu = data.dubuMode ?? false;
+    const level = data.level ?? 1;
 
     this.add.rectangle(width / 2, height / 2, width, height, 0x000000, 0.85);
 
@@ -28,7 +29,7 @@ export class GameOverScene extends Phaser.Scene {
 
     const btnColor = dubu ? '#ff69b4' : '#00ffaa';
     const btnStroke = dubu ? '#660033' : '#007744';
-    const btn = this.add.text(width / 2, height * 0.78, '↩  TRY AGAIN', {
+    const btn = this.add.text(width / 2, height * 0.72, '↩  TRY AGAIN', {
       fontSize: '30px', fontFamily: 'Arial Black', color: btnColor,
       padding: { x: 24, y: 10 }, backgroundColor: '#001122',
       stroke: btnStroke, strokeThickness: 3,
@@ -37,6 +38,21 @@ export class GameOverScene extends Phaser.Scene {
     btn.on('pointerover', () => btn.setScale(1.06));
     btn.on('pointerout', () => btn.setScale(1));
     btn.on('pointerdown', () => {
+      this.cameras.main.fadeOut(400, 0, 0, 0);
+      this.cameras.main.once('camerafadeoutcomplete', () => {
+        this.scene.start('Game', { level, lives: 3, score: 0, dubuMode: dubu });
+      });
+    });
+
+    const btn2 = this.add.text(width / 2, height * 0.87, '⏮  START FROM LEVEL 1', {
+      fontSize: '20px', fontFamily: 'Arial Black', color: '#8899bb',
+      padding: { x: 18, y: 8 }, backgroundColor: '#000a18',
+      stroke: '#334466', strokeThickness: 2,
+    }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+
+    btn2.on('pointerover', () => btn2.setScale(1.06));
+    btn2.on('pointerout', () => btn2.setScale(1));
+    btn2.on('pointerdown', () => {
       this.cameras.main.fadeOut(400, 0, 0, 0);
       this.cameras.main.once('camerafadeoutcomplete', () => {
         this.scene.start('Game', { level: 1, lives: 3, score: 0, dubuMode: dubu });
