@@ -287,36 +287,37 @@ export const LEVELS: LevelData[] = [
     timeLimit: 95,
     requiredCoins: 5,
     platforms: [
-      // ground with bounce pads embedded
+      // ground
       { x: 0,   y: 570, w: 120 },
-      { x: 840, y: 570, w: 120 },
-      { x: 130, y: 570, w: 64, type: 'bounce' },
-      { x: 310, y: 570, w: 64, type: 'bounce' },
-      { x: 490, y: 570, w: 64, type: 'bounce' },
-      { x: 670, y: 570, w: 64, type: 'bounce' },
-      // mid-air platforms reachable via bounce
-      { x: 100, y: 360, w: 112 },
-      { x: 280, y: 280, w: 112 },
-      { x: 460, y: 200, w: 112 },
-      { x: 640, y: 290, w: 112 },
-      { x: 780, y: 190, w: 128 },
-      { x: 830, y: 120, w: 112 },
-      // bounce pad on mid-air platform
-      { x: 450, y: 200, w: 48, type: 'bounce' },
-      // hazards
-      { x: 220, y: 360, w: 48, type: 'hazard' },
-      { x: 580, y: 200, w: 48, type: 'hazard' },
+      { x: 130, y: 570, w: 64, type: 'bounce' },  // main launch pad
+      { x: 460, y: 570, w: 64, type: 'bounce' },  // fallback bounce
+      { x: 700, y: 570, w: 260 },                 // right safe ground
+      // staircase — narrower platforms for more precision
+      { x: 80,  y: 390, w: 128 },  // step 1
+      { x: 270, y: 310, w: 112 },  // step 2
+      // moving platform between step 2 and 3 — adds timing challenge
+      { x: 370, y: 268, w: 80, type: 'moving', moveX: 1, moveRange: 50, moveSpeed: 65 },
+      { x: 440, y: 230, w: 112 },              // step 3
+      { x: 440, y: 230, w: 64, type: 'bounce' }, // bounce pad on step 3 → sends to step 4
+      // step 4 — narrow landing zone, requires precise bounce aim
+      { x: 590, y: 130, w: 128 },
+      // hazard right of step 4 — punishes overshoot
+      { x: 730, y: 130, w: 48, type: 'hazard' },
     ],
     spikes: [
-      { x: 200, y: 570, w: 96 },
-      { x: 380, y: 570, w: 96 },
-      { x: 560, y: 570, w: 96 },
-      { x: 740, y: 570, w: 80 },
+      { x: 200, y: 570, w: 240 },
+      { x: 534, y: 570, w: 150 },
     ],
     coins: [
-      { x: 162, y: 330 }, { x: 336, y: 250 },
-      { x: 490, y: 170 }, { x: 696, y: 260 },
-      { x: 834, y: 160 }, { x: 884, y:  50 },
+      { x: 155, y: 355 },  // step 1
+      { x: 325, y: 278 },  // near moving platform
+      { x: 495, y: 195 },  // step 3
+      { x: 648, y:  95 },  // step 4
+      { x: 800, y:  80 },  // floating on path to portal
+      { x: 882, y:  48 },  // near portal
+    ],
+    checkpoints: [
+      { x: 440, y: 230 },  // step 3
     ],
   },
   // ── LEVEL 8 ── Vanishing Act ──────────────────────────────────
@@ -396,7 +397,7 @@ export const LEVELS: LevelData[] = [
     coins: [
       { x: 174, y: 430 }, { x: 344, y: 340 },
       { x: 514, y: 255 }, { x: 684, y: 170 },
-      { x: 854, y: 100 }, { x: 240, y: 490 },
+      { x: 854, y: 100 }, { x: 550, y: 408 },
     ],
     powerups: [
       { x: 350, y: 460, kind: 'shield' },

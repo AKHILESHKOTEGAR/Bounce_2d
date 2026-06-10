@@ -20,6 +20,8 @@ const LEVEL_NOTES: string[] = [
 ];
 
 export class LevelCompleteScene extends Phaser.Scene {
+  private tip: Phaser.GameObjects.Container | null = null;
+
   constructor() { super('LevelComplete'); }
 
   create(data: { level: number; lives: number; score: number;
@@ -29,113 +31,126 @@ export class LevelCompleteScene extends Phaser.Scene {
     const nextLevel = data.level + 1;
     const hasNext = nextLevel <= LEVELS.length;
     const dubu = data.dubuMode ?? false;
+    const cx = width / 2, cy = height / 2;
 
-    this.add.rectangle(width / 2, height / 2, width, height, 0x000000, 0.7);
+    this.tip = null;
+
+    this.add.rectangle(cx, cy, width, height, 0x000000, 0.7);
 
     const panelStroke = dubu ? 0xff69b4 : 0x00ccff;
-    const panel = this.add.rectangle(width / 2, height / 2, 520, 560, 0x0a1a2a, 0.97);
-    panel.setStrokeStyle(2, panelStroke);
+    const panelGfx = this.add.graphics();
+    panelGfx.fillStyle(0x0a1a2a, 0.97);
+    panelGfx.fillRoundedRect(cx - 260, cy - 280, 520, 560, 16);
+    panelGfx.lineStyle(2, panelStroke, 0.85);
+    panelGfx.strokeRoundedRect(cx - 260, cy - 280, 520, 560, 16);
 
-    const headerColor = dubu ? '#ff69b4' : '#00ffaa';
+    // Header
+    const headerColor  = dubu ? '#ff69b4' : '#00ffaa';
     const headerStroke = dubu ? '#660033' : '#007744';
-    this.add.text(width / 2, height / 2 - 225, hasNext ? 'LEVEL COMPLETE!' : 'YOU WIN!', {
+    this.add.text(cx, cy - 225, hasNext ? 'LEVEL COMPLETE!' : 'YOU WIN!', {
       fontSize: '38px', fontFamily: 'Arial Black', color: headerColor,
       stroke: headerStroke, strokeThickness: 5,
       shadow: { color: headerColor, blur: 20, fill: true },
     }).setOrigin(0.5);
 
-    // Love note per level — only in dubu mode
+    // Love note (dubu only) or star rating (normal)
     if (dubu) {
       const noteIdx = Math.min(data.level - 1, LEVEL_NOTES.length - 1);
-      const note = this.add.text(width / 2, height / 2 - 165, LEVEL_NOTES[noteIdx], {
+      const note = this.add.text(cx, cy - 165, LEVEL_NOTES[noteIdx], {
         fontSize: '12px', fontFamily: 'Arial', color: '#ffb6c1',
         stroke: '#000020', strokeThickness: 2,
         align: 'center', lineSpacing: 4,
         wordWrap: { width: 470 },
       }).setOrigin(0.5, 0).setAlpha(0);
-
-      this.tweens.add({
-        targets: note, alpha: 1, duration: 700, delay: 250, ease: 'Quad.easeIn',
-      });
+      this.tweens.add({ targets: note, alpha: 1, duration: 700, delay: 250, ease: 'Quad.easeIn' });
+    } else {
+      const stars = data.allCoins ? 3 : data.timeBonus >= 200 ? 2 : 1;
+      const starStr = '★'.repeat(stars) + '☆'.repeat(3 - stars);
+      this.add.text(cx, cy - 130, starStr, {
+        fontSize: '40px', color: '#ffdd00',
+        shadow: { color: '#ffaa00', blur: 10, fill: true },
+      }).setOrigin(0.5);
+      if (data.allCoins) {
+        this.add.text(cx, cy - 80, 'ALL HEARTS COLLECTED!', {
+          fontSize: '13px', fontFamily: 'Arial', color: '#00ffaa', letterSpacing: 3,
+        }).setOrigin(0.5);
+      }
     }
 
     // Divider
-    const divColor = dubu ? 0xff69b4 : 0x224466;
     const divGfx = this.add.graphics();
-    divGfx.lineStyle(1, divColor, 0.5);
-    divGfx.lineBetween(width / 2 - 200, height / 2 + 15, width / 2 + 200, height / 2 + 15);
+    divGfx.lineStyle(1, dubu ? 0xff69b4 : 0x224466, 0.5);
+    divGfx.lineBetween(cx - 200, cy + 15, cx + 200, cy + 15);
 
-    const lines = [
-      ['Time Bonus', `+${data.timeBonus}`],
-      ['Heart Bonus', data.allCoins ? `+${data.coinBonus} ★` : `+0`],
+    // Stats
+    const lines: [string, string][] = [
+      ['Time Bonus',  `+${data.timeBonus}`],
+      ['Heart Bonus', data.allCoins ? `+${data.coinBonus} ★` : '+0'],
       ['Total Score', `${data.score}`],
     ];
     lines.forEach(([label, val], i) => {
-      this.add.text(width / 2 - 140, height / 2 + 30 + i * 36, label, {
+      this.add.text(cx - 140, cy + 30 + i * 36, label, {
         fontSize: '18px', fontFamily: 'Arial', color: '#88aacc',
       }).setOrigin(0, 0.5);
-      this.add.text(width / 2 + 140, height / 2 + 30 + i * 36, val, {
+      this.add.text(cx + 140, cy + 30 + i * 36, val, {
         fontSize: '18px', fontFamily: 'Arial Black', color: '#ffffff',
       }).setOrigin(1, 0.5);
     });
 
+    // Lives
     const hearts = '♥'.repeat(data.lives) + '♡'.repeat(3 - data.lives);
-    this.add.text(width / 2, height / 2 + 148, hearts, {
+    this.add.text(cx, cy + 148, hearts, {
       fontSize: '26px', color: dubu ? '#ff69b4' : '#ff4466',
     }).setOrigin(0.5);
 
-    const btnText = hasNext ? `▶  LEVEL ${nextLevel}` : '▶  PLAY AGAIN';
-    const btn = this.add.text(width / 2, height / 2 + 185, btnText, {
-      fontSize: '26px', fontFamily: 'Arial Black', color: headerColor,
-      padding: { x: 22, y: 9 }, backgroundColor: '#001122',
-      stroke: headerStroke, strokeThickness: 3,
-    }).setOrigin(0.5).setInteractive({ useHandCursor: true });
+    // ── Buttons ──────────────────────────────────────────────────
 
-    btn.on('pointerover', () => btn.setScale(1.06));
-    btn.on('pointerout', () => btn.setScale(1));
-    btn.on('pointerdown', () => {
+    const btnText = hasNext ? `▶  LEVEL ${nextLevel}` : '▶  PLAY AGAIN';
+    const nextTip = dubu
+      ? (hasNext ? `Let's keep going! ✨` : 'One more time! 💕')
+      : (hasNext ? `Go to Level ${nextLevel}` : 'Play again from Level 1');
+
+    const nextBtn = this.makeBtn(cx, cy + 192, btnText, 340, 50, headerColor, dubu ? 0x1a0010 : 0x001a0e, panelStroke, '24px');
+    nextBtn.on('pointerover', () => this.showTip(cx, cy + 192 - 40, nextTip, dubu));
+    nextBtn.on('pointerout',  () => this.hideTip());
+    nextBtn.on('pointerdown', () => {
       this.cameras.main.fadeOut(400, 0, 0, 0);
-      this.cameras.main.once('camerafadeoutcomplete', () => {
+      this.cameras.main.once('camerafadeoutcomplete', () =>
         this.scene.start('Game', {
           level: hasNext ? nextLevel : 1,
           lives: hasNext ? data.lives : 3,
           score: hasNext ? data.score : 0,
           dubuMode: dubu,
-        });
-      });
+        }));
     });
 
-    const retryBtn = this.add.text(width / 2, height / 2 + 228, `↩  RETRY LEVEL ${data.level}`, {
-      fontSize: '17px', fontFamily: 'Arial Black', color: '#aabbcc',
-      padding: { x: 14, y: 6 }, backgroundColor: '#000a18',
-      stroke: '#334466', strokeThickness: 2,
-    }).setOrigin(0.5).setInteractive({ useHandCursor: true });
-
-    retryBtn.on('pointerover', () => retryBtn.setScale(1.06));
-    retryBtn.on('pointerout', () => retryBtn.setScale(1));
+    const retryTip = dubu ? 'One more try! 💫' : `Retry Level ${data.level}`;
+    const retryBtn = this.makeBtn(cx - 98, cy + 249, '↩  RETRY', 175, 40, '#aabbcc', 0x050d1a, 0x334466, '16px');
+    retryBtn.on('pointerover', () => this.showTip(cx - 98, cy + 249 - 36, retryTip, dubu));
+    retryBtn.on('pointerout',  () => this.hideTip());
     retryBtn.on('pointerdown', () => {
       this.cameras.main.fadeOut(400, 0, 0, 0);
-      this.cameras.main.once('camerafadeoutcomplete', () => {
-        this.scene.start('Game', { level: data.level, lives: 3, score: 0, dubuMode: dubu });
-      });
+      this.cameras.main.once('camerafadeoutcomplete', () =>
+        this.scene.start('Game', { level: data.level, lives: 3, score: 0, dubuMode: dubu }));
     });
 
-    const fromStartBtn = this.add.text(width / 2, height / 2 + 262, '⏮  START FROM LEVEL 1', {
-      fontSize: '15px', fontFamily: 'Arial Black', color: '#667788',
-      padding: { x: 14, y: 6 }, backgroundColor: '#000a18',
-      stroke: '#223344', strokeThickness: 2,
-    }).setOrigin(0.5).setInteractive({ useHandCursor: true });
-
-    fromStartBtn.on('pointerover', () => fromStartBtn.setScale(1.06));
-    fromStartBtn.on('pointerout', () => fromStartBtn.setScale(1));
-    fromStartBtn.on('pointerdown', () => {
+    const lvl1Tip = dubu ? 'All the way back 🎀' : 'Start from Level 1';
+    const lvl1Btn = this.makeBtn(cx + 98, cy + 249, '⏮  LEVEL 1', 175, 40, '#667788', 0x050d1a, 0x223344, '15px');
+    lvl1Btn.on('pointerover', () => this.showTip(cx + 98, cy + 249 - 36, lvl1Tip, dubu));
+    lvl1Btn.on('pointerout',  () => this.hideTip());
+    lvl1Btn.on('pointerdown', () => {
       this.cameras.main.fadeOut(400, 0, 0, 0);
-      this.cameras.main.once('camerafadeoutcomplete', () => {
-        this.scene.start('Game', { level: 1, lives: 3, score: 0, dubuMode: dubu });
-      });
+      this.cameras.main.once('camerafadeoutcomplete', () =>
+        this.scene.start('Game', { level: 1, lives: 3, score: 0, dubuMode: dubu }));
     });
 
-    this.input.keyboard!.once('keydown-SPACE', () => btn.emit('pointerdown'));
+    // Slide-in
+    [nextBtn, retryBtn, lvl1Btn].forEach((btn, i) => {
+      btn.setAlpha(0);
+      this.tweens.add({ targets: btn, alpha: 1, duration: 300, delay: 200 + i * 100, ease: 'Quad.easeOut' });
+    });
+
+    this.input.keyboard!.once('keydown-SPACE', () => nextBtn.emit('pointerdown'));
     this.cameras.main.fadeIn(400, 0, 0, 0);
 
     this.time.addEvent({
@@ -143,6 +158,77 @@ export class LevelCompleteScene extends Phaser.Scene {
       callback: () => this.spawnFirework(dubu),
       callbackScope: this,
     });
+  }
+
+  // ── Tooltip ────────────────────────────────────────────────────
+
+  private showTip(x: number, y: number, msg: string, dubu: boolean) {
+    this.hideTip();
+
+    const bgColor  = dubu ? 0x1a0010 : 0x001122;
+    const border   = dubu ? 0xff69b4 : 0x00ffaa;
+    const txtColor = dubu ? '#ffb6c1' : '#aaffee';
+    const style = { fontSize: '13px', fontFamily: 'Arial', color: txtColor };
+
+    const measured = this.add.text(-2000, -2000, msg, style);
+    const tw = measured.width + 26;
+    const th = 28;
+    measured.destroy();
+
+    const c = this.add.container(x, y).setDepth(300).setAlpha(0);
+
+    const bg = this.add.graphics();
+    bg.fillStyle(bgColor, 0.97);
+    bg.fillRoundedRect(-tw / 2, -th / 2, tw, th, 8);
+    bg.lineStyle(1.5, border, 0.85);
+    bg.strokeRoundedRect(-tw / 2, -th / 2, tw, th, 8);
+    // Arrow pointing down toward button
+    bg.fillStyle(bgColor, 0.97);
+    bg.fillTriangle(-6, th / 2, 6, th / 2, 0, th / 2 + 8);
+    bg.lineStyle(1.5, border, 0.5);
+    bg.lineBetween(-6, th / 2, 0, th / 2 + 8);
+    bg.lineBetween(6,  th / 2, 0, th / 2 + 8);
+
+    const txt = this.add.text(0, 0, msg, style).setOrigin(0.5);
+    c.add([bg, txt]);
+
+    this.tweens.add({ targets: c, alpha: 1, duration: 140, ease: 'Quad.easeOut' });
+    this.tip = c;
+  }
+
+  private hideTip() {
+    if (!this.tip) return;
+    const t = this.tip;
+    this.tip = null;
+    this.tweens.add({ targets: t, alpha: 0, duration: 100, onComplete: () => t.destroy() });
+  }
+
+  // ── Button factory ─────────────────────────────────────────────
+
+  private makeBtn(
+    x: number, y: number, label: string,
+    w: number, h: number,
+    color: string, bgHex: number, strokeHex: number,
+    fontSize = '22px',
+  ) {
+    const c = this.add.container(x, y);
+    const gfx = this.add.graphics();
+    this.drawBg(gfx, w, h, bgHex, strokeHex, false);
+    const txt = this.add.text(0, 1, label, { fontSize, fontFamily: 'Arial Black', color }).setOrigin(0.5);
+    c.add([gfx, txt]);
+    c.setSize(w, h).setInteractive({ useHandCursor: true });
+    c.on('pointerover',  () => { this.tweens.add({ targets: c, scaleX: 1.05, scaleY: 1.05, duration: 110 }); this.drawBg(gfx, w, h, bgHex, strokeHex, true); });
+    c.on('pointerout',   () => { this.tweens.add({ targets: c, scaleX: 1,    scaleY: 1,    duration: 110 }); this.drawBg(gfx, w, h, bgHex, strokeHex, false); });
+    c.on('pointerdown',  () => this.tweens.add({ targets: c, scaleX: 0.95, scaleY: 0.95, duration: 70, yoyo: true }));
+    return c;
+  }
+
+  private drawBg(gfx: Phaser.GameObjects.Graphics, w: number, h: number, fill: number, stroke: number, hover: boolean) {
+    gfx.clear();
+    gfx.fillStyle(fill, 1);
+    gfx.fillRoundedRect(-w / 2, -h / 2, w, h, 10);
+    gfx.lineStyle(hover ? 2.5 : 1.5, stroke, hover ? 1 : 0.75);
+    gfx.strokeRoundedRect(-w / 2, -h / 2, w, h, 10);
   }
 
   private spawnFirework(dubu: boolean) {
